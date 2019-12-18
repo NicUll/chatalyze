@@ -1,31 +1,43 @@
+import re
 import sqlite3
+
+create_messages_table_query = '''
+CREATE TABLE IF NOT EXISTS messages (
+                                        id integer PRIMARY KEY,
+                                        data text NOT NULL,
+                                        message text,
+                                        user text,
+                                        channel text );
+'''
 
 
 class Messages(object):
 
-    def __init__(self):
-        self.conn = sqlite3.connect('messages.db')
-        self.cursor = self.conn.cursor()
+    '''Class used to handle the messages fetched from Twitch IRC'''
+
+    def __init__(self, db_file):
+        self.db_file = db_file
+        self.connection = sqlite3.connect(self.db_file)
 
     def setup_database(self):
-        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='messages';")
-        if not self.cursor.fetchone():
-            self.cursor.execute("create table messages (data text, message text, user text, type text)")
-            self.conn.commit()
+        cursor = self.connection.cursor()
+        cursor.execute(create_messages_table_query)
+        cursor.close()
 
     def close_connection(self):
-        self.conn.close()
+        self.connection.close()
 
     def insert_message(self, message):
+        m = re.match(r':(.*)!.*#(.*)\s:(.*)', message)
+        if m and len(m.groups() == 3):
+            user = m.group(1)
+            channel = m.group(2)
+            m_data = m.group(3)
+            cursor = self.connection.cursor()
+            self.cursor.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', (message, m_data,
+            user, channel))
+        return
+
+    def get_message(self):
         pass
 
-
-'''
-class Message(object):
-
-    def __init__(self, data, message="", user="", type=None):
-        self.data = data
-        self.message = message
-        self.user = user
-        self.type = type
-        '''
