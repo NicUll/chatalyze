@@ -34,7 +34,7 @@ class Messages(object):
             channel = m.group(2)
             m_data = m.group(3)
             cursor = self.connection.cursor()
-            self.cursor.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', (message, m_data,
+            cursor.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', (message, m_data,
             user, channel))
         return
 
