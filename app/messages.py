@@ -1,23 +1,51 @@
+from datetime import datetime
+
+from app.auth import get_credentials
+from app.dbhandler import DBHandler, Column
 from app.irc import IRC
+from data import connection_settings as cs
+
+message_table = [
+    Column('raw', str),
+    Column('user', str),
+    Column('message', str),
+    Column('c_time', datetime),
+]
+
+user_table = [
+    Column('u_name', str),
+    Column('GUID', int)
+]
 
 
 class Messages:
     """Class used to handle the messages fetched from Twitch IRC"""
 
-    def __init__(self, irc, channel):
+    def __init__(self, irc):
         self.irc: IRC = irc
-        self.channel: str = channel
-        self.table_name: str = 'c_%s' % channel
-        self.__storage: str = ":memory:"
-        self.db = object  # dbhandler
+        self.channel: str = ""
+        self.db: DBHandler = DBHandler()
+        self.__database: str = ":memory:"
+        self.__message_table: str = ""
+        self.__user_table: str = "user"
 
-    def select_channel(self, channel: str):
+    def connect_irc(self, HOST, PORT):
+        self.irc.connect(HOST, PORT)
+        self.irc.authenticate(get_credentials())
+
+    def connect_db(self):
+        self.db.connect(self.__database)
+        self.create_table(self.__user_table, user_table)
+
+    def connect(self, connection_settings):
+        self.connect_irc(connection_settings.HOST, connection_settings.PORT)
+        self.connect_db()
+
+    def set_channel(self, channel: str):
         self.irc.part_channel(self.channel)
         self.channel = channel
+        self.__message_table = 'ch_%s_messages' % self.channel
         self.irc.join_channel(self.channel)
-
-
-
 
     '''def insert_message(self, message):
         m = re.match(r':(.*)!.*#(.*)\s:(.*)', message)
