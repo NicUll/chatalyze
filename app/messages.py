@@ -1,28 +1,16 @@
 import re
-import sqlite3
 
-create_messages_table_query = '''
-CREATE TABLE IF NOT EXISTS %s (
-                                        id integer PRIMARY KEY,
-                                        data text NOT NULL,
-                                        message text,
-                                        user text,
-                                        channel text );
-'''
+from app.irc import IRC
 
 
-class Messages(object):
+class Messages:
     '''Class used to handle the messages fetched from Twitch IRC'''
 
-    def __init__(self, db_file):
-        self.db_file = db_file
-        self.table_name = 'messages'
-        self.connection = sqlite3.connect(self.db_file)
-        self.cursor = self.connection.cursor()
-        self.cursor.execute(create_messages_table_query % self.table_name)
-
-    def close_connection(self):
-        self.connection.close()
+    def __init__(self, irc, channel):
+        self.irc: IRC = irc
+        self.channel: str = channel
+        self.table_name = 'c_%s' % channel
+        self.__storage = ":memory:"
 
     def insert_message(self, message):
         m = re.match(r':(.*)!.*#(.*)\s:(.*)', message)
@@ -39,5 +27,3 @@ class Messages(object):
         messages = self.cursor.execute("select * from messages")
         for row in messages:
             print(row)
-
-
