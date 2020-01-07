@@ -1,3 +1,7 @@
+import sqlite3
+from typing import List
+
+
 class Column:
 
     def __init__(self, name, data_type, properties=None):
@@ -5,7 +9,7 @@ class Column:
         self.data_type = data_type
         self.properties = properties
 
-    def __repr__(self):
+    def __str__(self):
         return "%s %s %s" % (self.name, self.data_type, self.properties)
 
 
@@ -16,25 +20,45 @@ class DBHandler:
     """
 
     def __init__(self):
-        pass
+        self.conn: sqlite3.Connection = None
+        self.cur: sqlite3.Cursor = None
 
     def connect(self, database: str):
-        pass
+        self.conn = sqlite3.connect(database)
+        self.cur = self.conn.cursor()
 
     def close_connection(self):
-        pass
+        self.conn.close()
 
-    def create_table(self, name: str, columns: list[Column]):
-        pass
+    def create_table(self, name: str, columns: List[Column]):
+        columns_str: str = ", ".join(map(str, columns))
+        statement: str = "CREATE TABLE IF NOT EXISTS %s (%s);" % (name, columns_str)
+        self.cur.execute(statement)
+        self.conn.commit()
+
+    '''
+    def insert_row(self, table: str, cols: List[str], vals: List):
+        vals_str = "?" + ",?"*(len(vals)-1)
+
+        statement: str = "INSERT INTO %s (%s) VALUES (%s)" % (table, cols, vals_str)
+        self.cur.execute(statement, vals)
+        self.conn.commit()'''
+
+    def run_sql(self, sql: str):
+        self.cur.execute(sql)
+        self.conn.commit()
+        return self.cur
 
     def _attach_database(self, database: str, name: str):
-        pass
+        self.cur.execute("attach database %s as %s" % (database, name))
+        self.conn.commit()
 
     def _detach_database(self, name: str):
-        pass
+        self.cur.execute("detach database %s" % name)
+        self.conn.commit()
 
     def add_temp_db(self, name: str):
-        pass
+        self._attach_database(name=name)
 
     def remove_temp_db(self, name: str):
-        pass
+        self._detach_database(name=name)
