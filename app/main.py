@@ -6,11 +6,12 @@ Part of setup in main.py credit Sergio Lucero: https://gist.github.com/sergioluc
 """
 
 # Imports
-import datetime
+from datetime import datetime
 import os
 
 import graphene
 from flask import Flask
+from flask_graphql import GraphQLView
 from flask_sqlalchemy import SQLAlchemy
 from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
 
@@ -44,9 +45,9 @@ class Channel(db.Model):
 class Mood(db.Model):
     __tablename__ = 'mood'
 
-    id = db.column(db.Integer, primary_key=True)
-    name = db.column(db.String, unique=True)
-    rules = db.column(db.String)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+    rules = db.Column(db.String)
 
     def __repr__(self):
         return 'Mood %i = %s' % (self.id, self.name)
@@ -69,17 +70,18 @@ class Query(graphene.ObjectType):
     node = graphene.relay.Node.Field()
     all_channels = SQLAlchemyConnectionField(ChannelObject)
     all_moods = SQLAlchemyConnectionField(MoodObject)
-    
+
+
 class AddChannel(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
         active = graphene.Boolean(required=True)
-        mood_id = graphene.Integer(required=False)
-        
+        mood_id = graphene.Int()
+
     channel = graphene.Field(lambda: ChannelObject)
-    
-    def mutate(self, info, name, active, mood_id):
-        mood = Mood.query.filter_by(id=mood_id).first()
+
+    def mutate(self, info, name, active, mood_id=None):
+        mood = Mood.query.filter_by(id=mood_id).first() if mood_id else None
         channel = Channel(name=name, active=active)
 
         if mood is not None:
@@ -90,4 +92,30 @@ class AddChannel(graphene.Mutation):
 
         return AddChannel(channel=channel)
 
-        
+
+class Mutation(graphene.ObjectType):
+    add_channel = AddChannel.Field()
+
+
+schema = graphene.Schema(query=Query, mutation=Mutation)
+db.create_all()
+db.session.commit()
+# Routes
+
+app.add_url_rule(
+    '/graphql',
+    view_func=GraphQLView.as_view(
+        'graphql',
+        schema=schema,
+        graphiql=True
+    )
+)
+
+
+@app.route('/')
+def chatalyze():
+    return '<a href="/graphql"><h1>Chatalyzer</h1></a>'
+
+
+if __name__ == '__main__':
+    app.run()
