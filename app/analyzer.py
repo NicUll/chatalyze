@@ -8,3 +8,4 @@ class Analyzer:
     MAX_SECONDS_AMOUNT = 100
 
     def __init__(self):
+        pass
