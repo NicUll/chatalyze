@@ -1,6 +1,6 @@
 import socket
 
-from data import connection_settings
+from data import connection_settings as cs
 
 
 class IRC(object):
@@ -12,21 +12,28 @@ class IRC(object):
         self.socket.connect((host, port))
 
     def sendbytes(self, data: str):
-        self.socket.send(bytes(data, connection_settings.ENCODING))
+        sdata = data.strip()  # Remove any extra \r, \n and other whitespace
+        self.socket.send(bytes('%s\r\n' % sdata, cs.ENCODING))
 
     def authenticate(self, oauth, uname):
-        self.socket.send(bytes('PASS %s\r\n' % oauth, 'UTF-8'))
-        self.socket.send(bytes('NICK %s\r\n' % uname, 'UTF-8'))
+        self.sendbytes('PASS %s' % oauth)
+        self.sendbytes('NICK %s' % uname)
 
     def join_channel(self, channel):
-        self.socket.send(bytes('JOIN %s\r\n' % channel, 'UTF-8'))
+        self.sendbytes('JOIN %s' % channel)
 
     def part_channel(self, channel):
-        self.socket.send(bytes('PART %s\r\n' % channel, 'UTF-8'))
+        self.sendbytes('PART %s' % channel)
+
+    def check_ping(self, data):
+        if data == cs.PING_MESSAGE:
+            self.sendbytes(cs.PONG_MESSAGE)
+            self.get_data()  # Risk of loop if only PING is sent
+        return data
 
     def get_data(self) -> str:
         data = self.socket.recv(1024).decode('UTF-8')
-        return data
+        return self.check_ping(data)
 
     def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):  # IPv4 and TCP as standard
         return socket.socket(family, type)
