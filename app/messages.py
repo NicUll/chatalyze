@@ -21,8 +21,8 @@ user_table = [
 class Messages:
     """Class used to handle the messages fetched from Twitch IRC"""
 
-    def __init__(self, irc):
-        self.irc: IRC = irc
+    def __init__(self):
+        self.irc: IRC = IRC()
         self.channel: str = ""
         self.db: DBHandler = DBHandler()
         self.__database: str = ":memory:"
@@ -49,7 +49,8 @@ class Messages:
         self.irc.join_channel(self.channel, wait=7)
 
     def extract_message_data(self, message):
-        m = re.match(r':.*!(?P<user>.*)#(?P<channel>.*)\s:(?P<data>.*)')
+        message_data = re.match(r':.*!(?P<user>.*)#(?P<channel>.*)\s:(?P<data>.*)', message)
+        return message_data
 
 
     def insert_message(self, message):
