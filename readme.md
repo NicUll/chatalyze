@@ -46,10 +46,11 @@ and calculate message-frequency as well as mood based on rules in the mood table
 
 Ideas for moods/feelings describing the channel-chat can be seen in mood-ideas.md
 The mood was supposed to be calculated by the means of several parameters. 
-The memes being sent.
-If a raid is going on 
-If people are joining, or parting from the channel
-Various tags accessed with the CAP REQ commands.
+- The memes being sent.
+- If a raid is going on 
+- If people are joining, or parting from the channel
+- Are people being banned, etc, lots of moderation action
+- Various other tags accessed with the CAP REQ commands 
 
 
 
