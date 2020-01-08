@@ -5,9 +5,8 @@ App to connect to and analyze twitch-chat channels.
 Part of setup in main.py credit Sergio Lucero: https://gist.github.com/sergiolucero/1a1aab28f802491a4a03ac86f71b167f
 """
 
-# Imports
-from datetime import datetime
 import os
+from datetime import datetime
 
 import graphene
 from flask import Flask

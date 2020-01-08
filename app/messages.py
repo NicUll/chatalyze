@@ -3,7 +3,6 @@ from datetime import datetime
 from app.auth import get_credentials
 from app.dbhandler import DBHandler, Column
 from app.irc import IRC
-from data import connection_settings as cs
 
 message_table = [
     Column('raw', str),
