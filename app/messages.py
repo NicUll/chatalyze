@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from app.auth import get_credentials
@@ -42,12 +43,17 @@ class Messages:
         self.connect_db()
 
     def set_channel(self, channel: str):
-        self.irc.part_channel(self.channel)
+        if self.channel:
+            self.irc.part_channel(self.channel)
         self.channel = channel
         self.__message_table = 'ch_%s_messages' % self.channel
-        self.irc.join_channel(self.channel)
+        self.irc.join_channel(self.channel, wait=7)
 
-    '''def insert_message(self, message):
+    def extract_message_data(self, message):
+        m = re.match(r':.*!(?P<user>.*)#(?P<channel>.*)\s:(?P<data>.*)')
+
+
+    def insert_message(self, message):
         m = re.match(r':(.*)!.*#(.*)\s:(.*)', message)
         if m and len(m.groups()) == 3:
             user = m.group(1)
@@ -56,4 +62,4 @@ class Messages:
             cursor = self.connection.cursor()
             cursor.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', (message, m_data,
                                                                                                    user, channel))
-        return'''
+        return
