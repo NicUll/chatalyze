@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from app.auth import get_credentials
+import app.auth as auth
 from app.dbhandler import DBHandler, Column
 from app.irc import IRC
 from data import connection_settings as cs
@@ -29,10 +29,11 @@ class Messages:
         self.__database: str = ":memory:"
         self.__message_table: str = ""
         self.__user_table: str = "user"
+        auth.set_credentials(auth.creds.NICK, auth.creds.OAUTH)
 
     def connect_irc(self, HOST, PORT):
         self.irc.connect(HOST, PORT)
-        self.irc.authenticate(get_credentials())
+        self.irc.authenticate(auth.get_credentials())
 
     def connect_db(self):
         self.db.connect(self.__database)
