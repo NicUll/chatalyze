@@ -36,16 +36,8 @@ class DBHandler:
         self.cur.execute(statement)
         self.conn.commit()
 
-    '''
-    def insert_row(self, table: str, cols: List[str], vals: List):
-        vals_str = "?" + ",?"*(len(vals)-1)
-
-        statement: str = "INSERT INTO %s (%s) VALUES (%s)" % (table, cols, vals_str)
-        self.cur.execute(statement, vals)
-        self.conn.commit()'''
-
-    def run_sql(self, sql: str):
-        self.cur.execute(sql)
+    def run_sql(self, sql: str, *values):
+        self.cur.execute(sql, values)
         self.conn.commit()
         return self.cur
 
