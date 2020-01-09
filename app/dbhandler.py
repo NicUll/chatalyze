@@ -36,8 +36,8 @@ class DBHandler:
         self.cur.execute(statement)
         self.conn.commit()
 
-    def run_sql(self, sql: str):
-        self.cur.execute(sql)
+    def run_sql(self, sql: str, *values):
+        self.cur.execute(sql, values)
         self.conn.commit()
         return self.cur
 
