@@ -41,6 +41,10 @@ class DBHandler:
         self.conn.commit()
         return self.cur
 
+    def run_select(self, sql: str, *values):
+        return self.run_sql(sql, values).fetchall()
+
+
     def _attach_database(self, database: str, name: str):
         self.cur.execute("attach database %s as %s" % (database, name))
         self.conn.commit()
