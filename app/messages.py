@@ -43,12 +43,12 @@ class Messages:
         self._connect_irc(HOST, PORT, NICK, OAUTH)
         self._connect_db()
 
-    def set_channel(self, channel, waitlines):
+    def set_channel(self, channel):
         if self.channel:
             self.irc.part_channel(self.channel)
         self.channel = channel
         self.__message_table = 'ch_%s_messages' % self.channel
-        self.irc.join_channel(self.channel, wait=waitlines)
+        self.irc.join_channel(self.channel)
 
     def store_message(self, message):
         message_data = get_message_data_dict(message)
@@ -57,13 +57,18 @@ class Messages:
                             message_data['data'], message_data['user'], message_data['channel'])
         return
 
-    def get_message(self):
+    def read_irc(self):
         return self.irc.get_data()
 
     def get_and_store_message(self):
-        message = self.get_message()
+        message = self.read_irc()
         if message:
             self.store_message()
+
+    def read_latest_message(self):
+        self.db.run_sql(f'select * from messages limit 1 order by id desc')
+
+
 
 
 def get_message_data_dict(message):
