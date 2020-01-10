@@ -66,7 +66,8 @@ class Messages:
             self.store_message()
 
     def read_latest_message(self):
-        self.db.run_sql(f'select * from messages limit 1 order by id desc')
+        return self.db.run_select(f'select * from messages limit 1 order by id desc')
+
 
 
 
