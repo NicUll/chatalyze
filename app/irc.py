@@ -37,3 +37,4 @@ class IRC(object):
 
     def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):  # IPv4 and TCP as standard
         return socket.socket(family, type)
+
