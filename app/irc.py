@@ -1,3 +1,4 @@
+import re
 import socket
 
 from data import connection_settings as cs
@@ -5,15 +6,16 @@ from data import connection_settings as cs
 
 class IRC(object):
 
-    def __init__(self):
+    def __init__(self, encoding='UTF-8'):
         self.socket = self.create_socket()
+        self.encoding = encoding
 
     def connect(self, host: str, port: int):
         self.socket.connect((host, port))
 
     def sendbytes(self, data: str):
         sdata = data.strip()  # Remove any extra \r, \n and other whitespace
-        self.socket.send(bytes('%s\r\n' % sdata, cs.ENCODING))
+        self.socket.send(bytes('%s\r\n' % sdata, self.encoding))
 
     def authenticate(self, oauth, uname):
         self.sendbytes('PASS %s' % oauth)
@@ -32,9 +34,15 @@ class IRC(object):
         return data
 
     def get_data(self) -> str:
-        data = self.socket.recv(1024).decode(cs.ENCODING)
+        data = self.socket.recv(1024).decode(self.encoding)
         return self.check_ping(data)
 
     def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):  # IPv4 and TCP as standard
         return socket.socket(family, type)
 
+
+def get_message_data_dict(message: str) -> dict:
+    m = re.match(r':.*!(?P<user>.*)#(?P<channel>.*)\s:(?P<data>.*)', message)
+    if m and len(m.groups() == 3):
+        return {'user': m.group('user'), 'channel': m.group('channel'), 'data': m.group('data')}
+    return None
