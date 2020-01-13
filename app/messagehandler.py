@@ -1,14 +1,18 @@
 import sqlite3
-from datetime import datetime
+from typing import List
 
 from app.irc import IRC
 
 
-user_table = [
-    Column('u_name', 'str'),
-    Column('GUID', 'int')
-]
+class Column:
 
+    def __init__(self, name, data_type, properties=None):
+        self.name = name
+        self.data_type = data_type
+        self.properties = properties
+
+    def __str__(self):
+        return "%s %s %s" % (self.name, self.data_type, self.properties)
 
 
 class MessageHandler:
@@ -29,18 +33,18 @@ class MessageHandler:
 
     """
 
-    MESSAGE_TABLE = {
-        'raw': {'type': 'text', 'properties': None},
-        'user_name': {'type': 'text', 'properties': None},
-        'message': {'type': 'text', 'properties': None},
-        'c_time': {'type': 'text', 'properties': None},
-    }
+    MESSAGE_TABLE = [
+        Column('raw', 'text'),
+        Column('user_name', 'text'),
+        Column('message', 'text'),
+        Column('c_time', 'text')
+    ]
 
-    USER_TABLE = {
-        'channel_name': {'type': 'text', 'properties': None},
-        'user_name': {'type': 'text', 'properties': None},
-        'message_count':  {'type': 'integer', 'properties': None},
-    }
+    USER_TABLE = [
+        Column('channel_name', 'text'),
+        Column('user_name', 'text'),
+        Column('message_count', 'integer')
+    ]
 
     def __init__(self):
         self.irc: IRC = IRC()
@@ -57,13 +61,28 @@ class MessageHandler:
 
     def _init_db(self):
         self.conn = sqlite3.Connection(self._database)
-        self.conn.create_table(self.user_table, user_table)
+        self.create_table_if_empty(self.user_table, self.USER_TABLE)
 
     def connect(self, HOST, PORT, NICK=None, OAUTH=None):
+        """
+        Connects the IRC-module to host and initializes the database.
+
+        :param HOST: IRC host-adress
+        :param PORT: IRC host-port
+        :param NICK: Users nickname
+        :param OAUTH: Users generated oauth-value
+        :return:
+        """
         self._connect_irc(HOST, PORT, NICK, OAUTH)
         self._init_db()
 
     def set_channel(self, channel):
+        """
+        Part from current channel and connect to new one
+        :param channel:
+        :return:
+        """
+
         if self.current_channel:
             self.irc.part_channel(self.current_channel)
         self.current_channel = channel
@@ -86,11 +105,10 @@ class MessageHandler:
             self.store_message()
 
     def read_latest_message(self):
-        return self.db.run_select(f'select * from messages limit 1 order by id desc')
+        return self.db.run_select('select * from messages limit 1 order by id desc')
 
     def create_table_if_empty(self, name: str, columns: List):
         if self.conn:
-            self.conn()
-
-
-
+            columns_str: str = ", ".join(map(str, columns))
+            statement: str = 'CREATE TABLE IF NOT EXISTS ? (?);', (name, columns_str)
+            self.conn.execute(statement)
