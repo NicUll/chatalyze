@@ -1,31 +1,65 @@
 import re
 import socket
+from enum import Enum, unique
 
 from data import connection_settings as cs
 
 
 class IRC(object):
+    """
+    Class used to connect to an IRC-channel.
 
-    def __init__(self, encoding='UTF-8'):
+    Based on IRC-version IRCv3 with tag extension.
+    Written to fulfill the bare-minimum to read/send messages to/from an IRC-channel
+    """
+
+    def __init__(self, encoding: str = 'UTF-8'):
         self.socket = self.create_socket()
-        self.encoding = encoding
+        self.encoding: str = encoding
 
     def connect(self, host: str, port: int):
+        """
+        Connect a socket to the specified host-server
+
+        :param host: Host-address
+        :param port: Host-port to connect to
+        :return:
+        """
         self.socket.connect((host, port))
 
     def sendbytes(self, data: str):
+        """
+        Send a string to the channel
+
+        Note that no syntax-testing is done on the string.
+
+        :param data: String to send to IRC-channel.
+        :return:
+        """
         sdata = data.strip()  # Remove any extra \r, \n and other whitespace
-        self.socket.send(bytes('%s\r\n' % sdata, self.encoding))
+        self.socket.send(bytes(f'{sdata}\r\n', self.encoding))
 
-    def authenticate(self, oauth, uname):
-        self.sendbytes('PASS %s' % oauth)
-        self.sendbytes('NICK %s' % uname)
+    def authenticate(self, oauth: str, uname: str):
+        """
+        Used to login to an IRC-server
 
-    def join_channel(self, channel):
-        self.sendbytes('JOIN %s' % channel)
+        :param oauth:
+        :param uname:
+        :return:
+        """
+        self.sendbytes(f'PASS {oauth}')
+        self.sendbytes(f'NICK {uname}')
+
+    def join_channel(self, channel: str):
+        """
+
+        :param channel:
+        :return:
+        """
+        self.sendbytes(f'JOIN {channel}')
 
     def part_channel(self, channel):
-        self.sendbytes('PART %s' % channel)
+        self.sendbytes(f'PART {channel}')
 
     def check_ping(self, data):
         if data == cs.PING_MESSAGE:
@@ -41,8 +75,15 @@ class IRC(object):
         return socket.socket(family, type)
 
 
+@unique
+class Component(Enum):
+    USER = 'user'
+    CHANNEL = 'channel'
+
+
+
 def get_message_data_dict(message: str) -> dict:
-    m = re.match(r':.*!(?P<user>.*)#(?P<channel>.*)\s:(?P<data>.*)', message)
+    m = re.match(r':.*!(?P<user>[^@\s]*).*#(?P<channel>.*)\s:(?P<data>.*)', message)
     if m and len(m.groups() == 3):
         return {'user': m.group('user'), 'channel': m.group('channel'), 'data': m.group('data')}
     return None
