@@ -37,7 +37,8 @@ class IRC(object):
         data = self.socket.recv(1024).decode(self.encoding)
         return self.check_ping(data)
 
-    def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):  # IPv4 and TCP as standard
+    @staticmethod
+    def create_socket(family=socket.AF_INET, type=socket.SOCK_STREAM):  # IPv4 and TCP as standard
         return socket.socket(family, type)
 
 
