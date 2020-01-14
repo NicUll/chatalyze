@@ -1,6 +1,5 @@
 import re
 import socket
-from enum import Enum, unique
 
 from data import connection_settings as cs
 
@@ -71,19 +70,12 @@ class IRC(object):
         data = self.socket.recv(1024).decode(self.encoding)
         return self.check_ping(data)
 
-    def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):  # IPv4 and TCP as standard
-        return socket.socket(family, type)
-
-
-@unique
-class Component(Enum):
-    USER = 'user'
-    CHANNEL = 'channel'
-
+    def create_socket(self, family=socket.AF_INET, type_=socket.SOCK_STREAM):  # IPv4 and TCP as standard
+        return socket.socket(family, type_)
 
 
 def get_message_data_dict(message: str) -> dict:
-    m = re.match(r':.*!(?P<user>[^@\s]*).*#(?P<channel>.*)\s:(?P<data>.*)', message)
-    if m and len(m.groups() == 3):
+    m = re.match(fr':.*!(?P<user>[^@\s]*).*#(?P<channel>.*)\s:(?P<params>.*)', message)
+    if m and len(m.groups()) == 3:
         return {'user': m.group('user'), 'channel': m.group('channel'), 'data': m.group('data')}
-    return None
+    return {}
