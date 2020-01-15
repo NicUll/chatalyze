@@ -85,34 +85,48 @@ class MessageHandler:
 
         if self.current_channel:
             self.irc.part_channel(self.current_channel)
+        self._current_message_table = f'ch_{channel}_messages'
+        self.irc.join_channel(channel)
+        self.create_table_if_empty(channel, self.MESSAGE_TABLE)
         self.current_channel = channel
-        self._current_message_table = 'ch_%s_messages' % self.current_channel
-        self.irc.join_channel(self.current_channel)
 
     def run_select(self, sql: str, *values) -> List:
         result_cursor = self.conn.execute(sql, values)
         return result_cursor.fetchall()
 
-    def store_message(self, message):
+    def store_if_message(self, message) -> bool:
+        """
+        Store message in the corresponding channel-table.
+
+        Extracts user, channel and the actual message and stores in separate columns together with
+        the raw original message.
+
+        :param message: The message string retrieved from IRC
+        :return: Returns True if message is a storable privmsg
+        """
         message_data = IRC.get_message_data_dict(message)
         if message_data:
             self.conn.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', message,
                               message_data['data'], message_data['user'], message_data['channel'])
-        return
+            return True
+        return False
 
     def read_irc(self):
         return self.irc.get_data()
 
-    def get_and_store_message(self):
+    def extract_message_data(self, message: str):
+        return IRC.get_message_data_dict(message)
+
+    def get_and_store_message(self, retry=False):
         message = self.read_irc()
         if message:
-            self.store_message(message)
-
-    def read_latest_message(self):
-        return self.read_latest_messages(1)
+            self.store_if_message(message)
 
     def read_latest_messages(self, amount):
         return self.run_select('select * from messages limit ? order by id desc', amount)
+
+    def read_latest_message(self):
+        return self.read_latest_messages(1)
 
     def create_table_if_empty(self, name: str, columns: List):
         if self.conn:
