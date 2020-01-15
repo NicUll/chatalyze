@@ -79,3 +79,10 @@ class IRC(object):
         if m and len(m.groups()) == 3:
             return {'user': m.group('user'), 'channel': m.group('channel'), 'data': m.group('data')}
         return {}
+
+    @staticmethod
+    def get_message_command(message: str) -> str:
+        m = re.match(r'^(\S*\s)?(?P<cmd>\w+)\s', message, flags=re.ASCII)
+        if m:
+            return m.group('cmd')
+
