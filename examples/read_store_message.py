@@ -6,5 +6,5 @@ if __name__ == '__main__':
     messages = MessageHandler()
     messages.connect(cs.HOST, cs.PORT, creds.NICK, creds.OAUTH)
     messages.set_channel("#cohhcarnage")
-    messages.store_latest(amount=30)
+    messages.store_latest(amount=1)
     print(messages.read_latest_message())

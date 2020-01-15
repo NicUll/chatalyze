@@ -36,9 +36,9 @@ class MessageHandler:
     """
 
     MESSAGE_TABLE = [
-        Column('raw', 'text'),
         Column('user_name', 'text'),
         Column('message', 'text'),
+        Column('type', 'text'),
         Column('c_time', 'text')
     ]
 
@@ -99,7 +99,7 @@ class MessageHandler:
         result_cursor = self.conn.execute(sql, values)
         return result_cursor.fetchall()
 
-    def store_message_data(self, message,  message_data: dict):
+    def store_message_data(self, message_data: dict):
         """
         Store private message in the corresponding channel-table.
 
@@ -110,9 +110,9 @@ class MessageHandler:
         :return:
         """
 
-        self.conn.execute(f'insert into {self._current_message_table}(raw, user_name, message, c_time) values (?,?,?,?)',(
-                          message,
-                          message_data['user'], message_data['data'], datetime.now()))
+        self.conn.execute(
+            f'insert into {self._current_message_table}(user_name, message, c_time) values (?,?,?,?)', (
+                message_data['user'], message_data['data'], datetime.now()))
         print(self.run_select(f'select * from {self._current_message_table}'))
 
     def store_latest(self, amount=1, cmd=[]):
@@ -131,21 +131,14 @@ class MessageHandler:
                 if not data:
                     continue
 
-                self.store_message_data(message, data)
+                self.store_message_data(data)
                 handled_messages += 1
-            '''
-            if not message:
-                continue
-            if cmd and IRC.get_message_command(message) not in cmd:
-                continue
 
-            data = IRC.get_message_data_dict(message)
-            if not data:
-                continue
-            self.store_message_data(data)'''
+                if handled_messages >= amount:
+                    break
 
     def read_latest_messages(self, amount):
-        return self.run_select('select * from messages limit ? order by id desc', amount)
+        return self.run_select(f'select * from {self._current_message_table} limit ? order by ROWID desc', amount)
 
     def read_latest_message(self):
         return self.read_latest_messages(1)
