@@ -5,6 +5,6 @@ from app.messagehandler import MessageHandler
 if __name__ == '__main__':
     messages = MessageHandler()
     messages.connect(cs.HOST, cs.PORT, creds.NICK, creds.OAUTH)
-    messages.set_channel("#hasanabi")
-    messages.get_and_store_message()
+    messages.set_channel("#cohhcarnage")
+    messages.store_latest(amount=30)
     print(messages.read_latest_message())

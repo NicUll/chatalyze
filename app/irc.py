@@ -68,6 +68,7 @@ class IRC(object):
 
     def get_data(self) -> str:
         data = self.socket.recv(1024).decode(self.encoding)
+        print(data)
         return self.check_ping(data)
 
     def create_socket(self, family=socket.AF_INET, type_=socket.SOCK_STREAM):  # IPv4 and TCP as standard
@@ -75,7 +76,7 @@ class IRC(object):
 
     @staticmethod
     def get_message_data_dict(message: str) -> dict:
-        m = re.match(fr':.*!(?P<user>[^@\s]*).*#(?P<channel>.*)\s:(?P<params>.*)', message)
+        m = re.match(fr':.*!(?P<user>[^@\s]*).*#(?P<channel>.*)\s:(?P<data>.*)', message)
         if m and len(m.groups()) == 3:
             return {'user': m.group('user'), 'channel': m.group('channel'), 'data': m.group('data')}
         return {}

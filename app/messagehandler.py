@@ -1,4 +1,6 @@
+import re
 import sqlite3
+from datetime import datetime
 from typing import List
 
 from app.irc import IRC
@@ -85,42 +87,62 @@ class MessageHandler:
 
         if self.current_channel:
             self.irc.part_channel(self.current_channel)
-        self._current_message_table = f'ch_{channel}_messages'
+        self._current_message_table = f'ch_{channel.replace("#", "")}_messages'
         self.irc.join_channel(channel)
-        self.create_table_if_empty(channel, self.MESSAGE_TABLE)
+        self.create_table_if_empty(self._current_message_table, self.MESSAGE_TABLE)
         self.current_channel = channel
+
+    def read_irc(self):
+        return self.irc.get_data()
 
     def run_select(self, sql: str, *values) -> List:
         result_cursor = self.conn.execute(sql, values)
         return result_cursor.fetchall()
 
-    def store_if_message(self, message) -> bool:
+    def store_message_data(self, message,  message_data: dict):
         """
-        Store message in the corresponding channel-table.
+        Store private message in the corresponding channel-table.
 
-        Extracts user, channel and the actual message and stores in separate columns together with
+        Store user, channel and the actual message in separate columns together with
         the raw original message.
 
-        :param message: The message string retrieved from IRC
-        :return: Returns True if message is a storable privmsg
+        :param message_data: The message-data dict retrieved from IRC
+        :return:
         """
-        message_data = IRC.get_message_data_dict(message)
-        if message_data:
-            self.conn.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', message,
-                              message_data['data'], message_data['user'], message_data['channel'])
-            return True
-        return False
 
-    def read_irc(self):
-        return self.irc.get_data()
+        self.conn.execute(f'insert into {self._current_message_table}(raw, user_name, message, c_time) values (?,?,?,?)',(
+                          message,
+                          message_data['user'], message_data['data'], datetime.now()))
+        print(self.run_select(f'select * from {self._current_message_table}'))
 
-    def extract_message_data(self, message: str):
-        return IRC.get_message_data_dict(message)
+    def store_latest(self, amount=1, cmd=[]):
+        handled_messages = 0
+        while handled_messages < amount:
 
-    def get_and_store_message(self, retry=False):
-        message = self.read_irc()
-        if message:
-            self.store_if_message(message)
+            irc_data = self.read_irc()
+            messages = re.split(r'\r\n', irc_data)
+            messages.pop()
+
+            for message in messages:
+                if cmd and IRC.get_message_command(message) not in cmd:
+                    continue
+
+                data = IRC.get_message_data_dict(message)
+                if not data:
+                    continue
+
+                self.store_message_data(message, data)
+                handled_messages += 1
+            '''
+            if not message:
+                continue
+            if cmd and IRC.get_message_command(message) not in cmd:
+                continue
+
+            data = IRC.get_message_data_dict(message)
+            if not data:
+                continue
+            self.store_message_data(data)'''
 
     def read_latest_messages(self, amount):
         return self.run_select('select * from messages limit ? order by id desc', amount)
