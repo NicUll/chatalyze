@@ -89,11 +89,15 @@ class MessageHandler:
         self._current_message_table = 'ch_%s_messages' % self.current_channel
         self.irc.join_channel(self.current_channel)
 
+    def run_select(self, sql: str, *values) -> List:
+        result_cursor = self.conn.execute(sql, values)
+        return result_cursor.fetchall()
+
     def store_message(self, message):
         message_data = IRC.get_message_data_dict(message)
         if message_data:
-            self.db.run_sql(f'insert into messages(message, data, user, channel) values (?,?,?,?)', message,
-                            message_data['data'], message_data['user'], message_data['channel'])
+            self.conn.execute('insert into messages(message, data, user, channel) values (?,?,?,?)', message,
+                              message_data['data'], message_data['user'], message_data['channel'])
         return
 
     def read_irc(self):
@@ -102,13 +106,16 @@ class MessageHandler:
     def get_and_store_message(self):
         message = self.read_irc()
         if message:
-            self.store_message()
+            self.store_message(message)
 
     def read_latest_message(self):
-        return self.db.run_select('select * from messages limit 1 order by id desc')
+        return self.read_latest_messages(1)
+
+    def read_latest_messages(self, amount):
+        return self.run_select('select * from messages limit ? order by id desc', amount)
 
     def create_table_if_empty(self, name: str, columns: List):
         if self.conn:
             columns_str: str = ", ".join(map(str, columns))
-            statement: str = 'CREATE TABLE IF NOT EXISTS ? (?);', (name, columns_str)
+            statement: str = f'CREATE TABLE IF NOT EXISTS {name} ({columns_str});'
             self.conn.execute(statement)

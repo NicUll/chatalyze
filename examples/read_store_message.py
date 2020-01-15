@@ -1,8 +1,6 @@
-from app.messagehandler import MessageHandler
 import data.connection_settings as cs
 import data.creds as creds
-
-
+from app.messagehandler import MessageHandler
 
 if __name__ == '__main__':
     messages = MessageHandler()
