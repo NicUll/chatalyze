@@ -111,11 +111,23 @@ class MessageHandler:
         """
 
         self.conn.execute(
-            f'insert into {self._current_message_table}(user_name, message, c_time) values (?,?,?,?)', (
-                message_data['user'], message_data['data'], datetime.now()))
-        print(self.run_select(f'select * from {self._current_message_table}'))
+            f'insert into {self._current_message_table}(user_name, message, type, c_time) values (?,?,?,?)', (
+                message_data['user'], message_data['data'], message_data['type'], datetime.now()))
+        # TODO Add try-except for missing table or invalid data being posted.
+
+
 
     def store_latest(self, amount=1, cmd=[]):
+        """
+        Read IRC-messages and store in database.
+
+        Will process 'amount' number of messages and only store messages with a certain command-type
+        if that command is in the cmd-list or the list is empty.
+
+        :param amount: Amount of messages to process (not store)
+        :param cmd: The types of commands messages need to have to be stored
+        :return:
+        """
         handled_messages = 0
         while handled_messages < amount:
 
@@ -124,13 +136,15 @@ class MessageHandler:
             messages.pop()
 
             for message in messages:
-                if cmd and IRC.get_message_command(message) not in cmd:
+                message_cmd = IRC.get_message_command(message)
+                if cmd and message_cmd not in cmd:
                     continue
 
                 data = IRC.get_message_data_dict(message)
+
                 if not data:
                     continue
-
+                data['type'] = message_cmd
                 self.store_message_data(data)
                 handled_messages += 1
 
