@@ -115,8 +115,6 @@ class MessageHandler:
                 message_data['user'], message_data['data'], message_data['type'], datetime.now()))
         # TODO Add try-except for missing table or invalid data being posted.
 
-
-
     def store_latest(self, amount=1, cmd=[]):
         """
         Read IRC-messages and store in database.
@@ -151,11 +149,8 @@ class MessageHandler:
                 if handled_messages >= amount:
                     break
 
-    def read_latest_messages(self, amount):
-        return self.run_select(f'select * from {self._current_message_table} limit ? order by ROWID desc', amount)
-
-    def read_latest_message(self):
-        return self.read_latest_messages(1)
+    def read_latest_messages(self, amount=1):
+        return self.run_select(f'select * from {self._current_message_table} limit ?', amount)
 
     def create_table_if_empty(self, name: str, columns: List):
         if self.conn:
