@@ -9,4 +9,4 @@ def get_credentials():
 
 def set_credentials(oauth, nick):
     __OAUTH = oauth
-    __NICK == nick
+    __NICK = nick
